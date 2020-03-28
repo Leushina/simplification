@@ -1,0 +1,12 @@
+.idea*
+*.txt
+parsing* 
+sari.egg-info
+data*
+setup.py
+crawler.py
+server.py
+venv*
+transformer*
+*coder*
+
