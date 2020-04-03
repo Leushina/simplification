@@ -1,10 +1,6 @@
-# from __future__ import unicode_literals, print_function, division
-# from __future__ import absolute_import, division, print_function, unicode_literals
 import tensorflow as tf
 import numpy as np
 import torch
-from sklearn.model_selection import train_test_split
-import pandas as pd
 import os
 
 from get_model import create_model, preprocess_sentence, preprocess
