@@ -5,8 +5,9 @@ sari.egg-info
 data*
 setup.py
 crawler.py
-server.py
 venv*
 transformer*
 *coder*
 
+sari/__pycache__/SARI.cpython-37.pyc
+*.pyc
