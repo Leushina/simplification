@@ -324,7 +324,8 @@ def translate(model, src, max_len=80, custom_string=True):
         outputs[i] = ix[0][0]
         if ix[0][0] == target_text.vocab.stoi['<end>']:
             break
-    return ' '.join([target_text.vocab.itos[ix] for ix in outputs[:i]])
+        temp = len('<start> ')
+    return ' '.join([target_text.vocab.itos[ix] for ix in outputs[:i]])[temp:]
 
 
 def create_masks(src, trg):
