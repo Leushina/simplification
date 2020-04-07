@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required metadata tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Translate and analyze text with Azure Cognitive Services.">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>Simplification</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Translate</h1>
+      <p>Text Simplification lol kek</p>
+<div class="row">
+  <div class="col">
+    <form>
+      <!-- Enter text to translate. -->
+      <div class="form-group">
+        <label for="text-to-translate"><strong>Enter the text you'd like to translate:</strong></label>
+        <textarea class="form-control" id="text-to-translate" rows="8"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary mb-2" id="translate">Translate text</button></br>
+    </form>
+  <div class="col">
+    <!-- Translated text returned by the Translate API is rendered here. -->
+    <form>
+      <div class="form-group" id="translator-text-response">
+        <label for="translation-result"><strong>Translated text:</strong></label>
+        <textarea readonly class="form-control" id="translation-result" rows="8"></textarea>
+      </div>
+    </form>
+  </div>
+</div>
+</div>
+      </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
+
+    </script>
+
+    <script type = "text/javascript">
+       $(function() {
+  //Translate text with flask route
+  $("#translate").on("click", function(e) {
+    e.preventDefault();
+    var translateVal = document.getElementById("text-to-translate").value;
+    var translateRequest = { 'text': translateVal }
+    if (translateVal !== "") {
+      $.ajax({
+        url: '/simplify',
+        method: 'POST',
+        headers: {
+            'Content-Type':'application/json'
+        },
+        dataType: 'json',
+        data: JSON.stringify(translateRequest),
+        success: function(data) {
+        console.log(data)
+        for (var i = 0; i < data.simplifications.length; i++) {
+          document.getElementById("translation-result").textContent = data.simplifications[i].translation;}
+        }
+      });
+    };
+  });
+})
+      </script>
+  </body>
+</html>
