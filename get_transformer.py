@@ -1,11 +1,11 @@
 import math
-import copy, time
+import copy
+import time
 import pandas as pd
 import numpy as np
 import spacy
 import torch
 import torch.nn as nn
-from torch import optim
 import torch.nn.functional as F
 from torchtext.data import Field, TabularDataset
 from torchtext import data
@@ -16,8 +16,13 @@ from get_model import preprocess
 from sari.SARI import SARIsent
 
 
-def batch_size_fn(new, count, sofar):
-    "Keep augmenting batch and calculate total number of tokens + padding."
+def batch_size_fn(new, count):
+    """
+    Keep augmenting batch and calculate total number of tokens + padding.
+    :param new:
+    :param count:
+    :return:
+    """
     global max_src_in_batch, max_tgt_in_batch
     if count == 1:
         max_src_in_batch = 0
@@ -41,7 +46,6 @@ class MyIterator(data.Iterator):
                         yield b
 
             self.batches = pool(self.data(), self.random_shuffler)
-
         else:
             self.batches = []
             for b in data.batch(self.data(), self.batch_size,
@@ -292,7 +296,6 @@ class Transformer(nn.Module):
 def nopeak_mask(size):
     np_mask = np.triu(np.ones((1, size, size)), k=1).astype("uint8")
     np_mask = Variable(torch.from_numpy(np_mask) == 0)
-    # # if device == 0:
     if device.type == 'cuda':
         np_mask = np_mask.cuda()
     return np_mask
@@ -301,7 +304,7 @@ def nopeak_mask(size):
 def translate(model, src, max_len=80, custom_string=True):
     model.eval()
 
-    if custom_string == True:
+    if custom_string:
         src = tokenize_en(src)  # .transpose(0,1)
         # sentence = Variable(torch.LongTensor([[input_text.vocab.stoi[tok] for tok in sentence]])) #.cuda()
         src = Variable(torch.LongTensor([[input_text.vocab.stoi[tok] for tok in src]])).cuda()
@@ -329,54 +332,42 @@ def translate(model, src, max_len=80, custom_string=True):
 
 
 def create_masks(src, trg):
-        src_mask = (src != input_text.vocab.stoi['<pad>']).unsqueeze(-2)
+    src_mask = (src != input_text.vocab.stoi['<pad>']).unsqueeze(-2)
 
-        if trg is not None:
-            trg_mask = (trg != target_text.vocab.stoi['<pad>']).unsqueeze(-2)
-            size = trg.size(1)  # get seq_len for matrix
-            np_mask = nopeak_mask(size)
-            # if trg.is_cuda:
-            # if device == 0:
-            if device.type == 'cuda':
-                np_mask = np_mask.cuda()
-                trg_mask = trg_mask.cuda()
-            trg_mask = trg_mask & np_mask
-        else:
-            trg_mask = None
+    if trg is not None:
+        trg_mask = (trg != target_text.vocab.stoi['<pad>']).unsqueeze(-2)
+        size = trg.size(1)  # get seq_len for matrix
+        np_mask = nopeak_mask(size)
+        if device.type == 'cuda':
+            np_mask = np_mask.cuda()
+            trg_mask = trg_mask.cuda()
+        trg_mask = trg_mask & np_mask
+    else:
+        trg_mask = None
 
-        return src_mask, trg_mask
+    return src_mask, trg_mask
 
 
 def tokenize_en(sentence):
-        return [tok.text for tok in en.tokenizer(sentence)]
+    return [tok.text for tok in en.tokenizer(sentence)]
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if device.type == 'cuda':
     spacy.prefer_gpu()
 en = spacy.load('en_core_web_sm')
-input_text = Field(tokenize=tokenize_en)
-target_text = Field(tokenize=tokenize_en,
-                        init_token="<start>",
-                        eos_token="<end>")
 
-data_fields = [('Complex', input_text), ('Simple', target_text)]
-train, val = data.TabularDataset.splits(path='data_csv/',
-                                            train='train.csv',
-                                            validation='val.csv',
-                                            format='csv', fields=data_fields)
-input_text.build_vocab(train, val)
-target_text.build_vocab(train, val)
+
+# input_text.build_vocab(train, val)
+# target_text.build_vocab(train, val)
+#
+# torch.save(input_text, 'input_text.p')
+# torch.save(target_text, 'target_text.p')
+
+input_text = torch.load('input_text.p')
+target_text = torch.load('target_text.p')
 
 global max_src_in_batch, max_tgt_in_batch
-
-batch_size = 1300
-train_iter = MyIterator(train, batch_size=batch_size,  # device=device,
-                       repeat=False, sort_key=lambda x: (len(x.Complex), len(x.Simple)),
-                       batch_size_fn=batch_size_fn, train=True,
-                       shuffle=True)
-
-steps_per_epoch = len(train) // batch_size
 
 input_pad = input_text.vocab.stoi['<pad>']
 target_pad = target_text.vocab.stoi['<pad>']
@@ -414,6 +405,20 @@ def create_transformer():
         return max(saris), sum(saris) / n
 
     def train_model(epochs, print_every=500):
+
+        batch_size = 1300
+
+        data_fields = [('Complex', input_text), ('Simple', target_text)]
+        train, val = data.TabularDataset.splits(path='data_csv/',
+                                                    train='train.csv',
+                                                    validation='val.csv',
+                                                    format='csv', fields=data_fields)
+
+        train_iter = MyIterator(train, batch_size=batch_size,  # device=device,
+                               repeat=False, sort_key=lambda x: (len(x.Complex), len(x.Simple)),
+                               batch_size_fn=batch_size_fn, train=True,
+                               shuffle=True)
+
         model.train()
 
         start = time.time()
@@ -470,7 +475,8 @@ def create_transformer():
             temp = time.time()
 
     model = Transformer(src_vocab, trg_vocab, d_model, N, heads)
-    if device.type == 'cuda': model = model.cuda()
+    if device.type == 'cuda':
+        model = model.cuda()
     for p in model.parameters():
         if p.dim() > 1:
             nn.init.xavier_uniform_(p)
@@ -481,7 +487,6 @@ def create_transformer():
     model.load_state_dict(torch.load(dst))  # map_location=torch.device('cpu')))
     model.eval()
     # train_model(5)
-
     return model
 
 
