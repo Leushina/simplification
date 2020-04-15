@@ -55,17 +55,15 @@ def simplify():
     """
     data = request.get_json()
     text_input = data['text']
-    preds = {'simplifications': []}
+    preds = {"simplifications": "", "complex_sents" : ""}
     src = str(text_input)
     src = sent_tokenize(src)
 
     for i, sent in enumerate(src):
+        preds['complex_sents'] += sent
         sent = preprocess_sentence(sent)
         simp_src = translate(model, sent)
-        prediction = {'sentence_id': i,
-                   'translation': simp_src,
-                   'source sentence': src}
-    preds['simplifications'].append(prediction)
+        preds['simplifications'] += ' ' + simp_src
 
     return jsonify(preds)
 
@@ -83,24 +81,23 @@ def save():
 
     if simple_txt == '':
         return -1
-    # for i, sent in enumerate(src):
-    #     sent = preprocess_sentence(sent)
-    #     simp_src = translate(model, sent)
-    #     prediction = {'sentence_id': i,
-    #                'translation': simp_src,
-    #                'source sentence': src}
+
+    src = sent_tokenize(input_txt)
+    trg = sent_tokenize(simple_txt)
+    evaluate = len(src) * [evaluate]
+    values = [[d[0], d[1], d[2]] for d in zip(src, trg, evaluate)]
 
     body = {
         'range': RANGE_NAME,
-        'values': [[input_txt, simple_txt, evaluate]]
+        'values': values,
     }
 
     value_input_option = 'RAW'
     insert_data_option = 'INSERT_ROWS'
-    request = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME,
+    request_ = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME,
                                                      valueInputOption=value_input_option,
                                                      insertDataOption=insert_data_option, body=body)
-    response = request.execute()
+    response = request_.execute()
     print(response)
     return response
 
