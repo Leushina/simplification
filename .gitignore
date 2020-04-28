@@ -12,3 +12,6 @@ credentials.json
 *.p
 sari/__pycache__/SARI.cpython-37.pyc
 *.pyc
+crawler*
+*.npy
+*.sav
