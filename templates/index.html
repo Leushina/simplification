@@ -1,41 +1,72 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Required metadata tags -->
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Translate and analyze text with Azure Cognitive Services.">
+    <meta name="description" content="search and simplify">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <title>Simplification</title>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Simplify</h1>
-      <p>This is a Text Simplification project. You can input a sentence to simplify, model will suggest you a
-        simplification. You can modify it, if its quality isn't the best, and save it for future research. Thank you!</p>
-<div class="row">
-  <div class="col">
-    <form>
-      <!-- Enter text to translate. -->
-      <div class="form-group">
-        <label for="text-to-translate"><strong>Enter the text you'd like to translate:</strong></label>
-        <textarea class="form-control" id="text-to-translate" rows="8"></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary mb-2" id="translate">Translate text</button></br>
-    </form>
-    <form>
-      <div class="form-group" id="translator-text-response">
-        <label for="translation-result"><strong>Translated text:</strong></label>
-        <textarea class="form-control" id="translation-result" rows="8"></textarea>
+</head>
+<body>
+    <div class=”container”>
+    <div class="col-lg-10">
+<!--    <h1>Text Simplification</h1>-->
+<!--    <p>This is a Text Simplification project. </p>-->
+        <p></p>
+    </div>
+    </div>
+    <div class=”container”>
+        <div class="row">
+            <div class="col-sm-3 offset-sm-1 bg-dark text-white" id="search-container">
+                <h2>Type a query</h2>
+                <p> You can look for news article from reuters.com to find something that is interesting to you but
+    written in a way that is hard to understand. </p>
+<!--                <input class="form-control" type="text" placeholder="Search" id="text-to-search" aria-label="Search">-->
 
-          <div class="form-check">
-           <input class="form-check-input" type="radio" name="radios" id="radios1" value="1" checked>
-        <label class="form-check-label" for="radios1">
-          Simplification is good
-        </label>
-      </div>
+                        <textarea class="form-control" id="text-to-search" rows="1"></textarea>
+                <p></p>
+                <button type="submit" class="btn btn-primary mb-2" id="search">Search</button></br>
+                <p></p>
+                <div class="invisible" id="article to display"> </div>
+                <button class="invisible bg-secondary" id="result 1"></button>
+                <p></p>
+                <button class="invisible bg-secondary" id="result 2"></button>
+                <p></p>
+                <button class="invisible bg-secondary" id="result 3"></button>
+                <p></p>
+                <button class="invisible bg-secondary" id="result 4"></button>
+                <p></p>
+                <button class="invisible bg-secondary" id="result 5"></button>
+            </div>
+            <div class="col-md-7 bg-light text-dark" id="simplify-container">
+<!--            offset-md-4-->
+              <h2>Simplify</h2>
+              <p> Text Simplification deals with written text's complexity and readability.
+                  Here you can input a sentence (or several) to simplify, model will suggest you a simplification.
+                  Just copy it from text to your left or enter it yourself, without beforehand searching.
+                  Sentence(s) that you will see are going to be easier to read and understand.
+              </p>
+                    <form>
+              <!-- Enter text to translate. -->
+                        <div class="form-group">
+                        <label for="text-to-translate" id="text-form-translate"><strong>Enter the text you'd like to simplify:</strong></label>
+                        <textarea class="form-control" id="text-to-translate" rows="4"></textarea>
+                        </div>
+                    <button type="submit" class="btn btn-primary mb-2" id="translate">Simplify</button></br>
+                    </form>
+                    <form>
+                        <div class="form-group" id="translator-text-response">
+                        <label for="translation-result"><strong>Suggested text simplification(s):</strong></label>
+                        <textarea class="form-control" id="translation-result" rows="4"></textarea>
+                        </div>
+                    <div class="form-check">
+                    <input class="form-check-input" type="radio" name="radios" id="radios1" value="1" checked>
+                    <label class="form-check-label" for="radios1">
+                    Simplification is good
+                    </label>
+                    </div>
       <div class="form-check">
         <input class="form-check-input" type="radio" name="radios" id="radios2" value="0">
         <label class="form-check-label" for="radios2">
@@ -43,19 +74,20 @@
         </label>
       </div>
      <button type="submit" class="btn btn-primary mb-2" id="save">Save data</button></br>
-      </div>
     </form>
 </div>
 </div>
       </div>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
-
-    </script>
-    <script type = "text/javascript" src="static/scripts/save.js">
-      </script>
-    <script type = "text/javascript" src="static/scripts/translate.js">
-      </script>
-  </body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous">
+</script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type = "text/javascript" async src="static/scripts/main.js"></script>
+</body>
 </html>

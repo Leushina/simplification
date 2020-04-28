@@ -1,5 +1,6 @@
 from get_model import unicode_to_ascii
 from get_transformer import create_transformer, translate
+from crawler import *
 import re
 import os.path
 import torch
@@ -31,8 +32,19 @@ service = apiclient.discovery.build('sheets', 'v4', http=httpAuth)
 # Call the Sheets API
 sheet = service.spreadsheets()
 
+indexer, doc_lengths, doc_urls, term2id = read_indexers()
+tdm = get_tfidf()
+pca_ = get_pca_model()
+global articles_to_simplify
+articles_to_simplify = []
+
 
 def preprocess_sentence(sent):
+    """
+
+    :param sent:
+    :return:
+    """
     sent = unicode_to_ascii(sent.lower().strip())
     sent = re.sub(r"([?.!,¿])", r" \1 ", sent)
     sent = re.sub(r'[" "]+', " ", sent)
@@ -50,7 +62,7 @@ def index():
 @app.route('/simplify', methods=["POST"])
 def simplify():
     """
-    Simplification of user's file (text)
+    Simplification of user's file (text) from text form on the page
     :return: json with simplification of found sentences
     """
     data = request.get_json()
@@ -71,7 +83,8 @@ def simplify():
 @app.route('/save', methods=["POST"])
 def save():
     """
-    Saves data to the google sheet
+    Saves data (simplification and evaluation) to the google sheet.
+    Getting data from page, tokenize it on sentences and save each sentence as row in google sheet
     :return: json with simplification of found sentences
     """
     data = request.get_json()
@@ -102,6 +115,53 @@ def save():
     return response
 
 
-if __name__ == "__main__":
+@app.route('/search', methods=["POST"])
+def search():
+    """
+    Search by input query on reuters.com
+    For this we use term-document matrix (with reduced dimensions)
+                    Pca-model to transform query
+                    and some additional help, dictionary of urls and terms
+    We save obtained urls to global var for later usage
+    :return: json with simplification of found sentences
+    """
+    global articles_to_simplify
+    data = request.get_json()
+    text_input = str(data['text'])
+    results = {"query": text_input, "search_results": []}
 
+    query_result = process_query(text_input,  tdm, term2id, indexer, pca_, doc_urls, top_k=5)
+    for url, text in query_result:
+        results["search_results"].append(text)
+        articles_to_simplify.append(url)
+    return jsonify(results)
+
+
+@app.route('/show_article', methods=["POST"])
+def display_article():
+    """
+    Displaying one of the articles from the search results
+    Get id of article from js and find its url.
+    Parse this url and get text information (all <p> tags)
+    Display accordingly.
+    """
+    global articles_to_simplify
+
+    data = request.get_json()
+    idx = str(data['idx'])
+    idx = int(idx[-1]) - 1
+    url = articles_to_simplify[idx]
+    articles_to_simplify = []
+
+    doc = HtmlDocument(url)
+    doc.parse()
+    txt = "<p>" + doc.header
+    texts = doc.body.findAll('p')
+    txt += u"</p><p>".join([t.getText() for t in texts])
+    txt += "</p>"
+    results = {"article": txt}
+    return jsonify(results)
+
+
+if __name__ == "__main__":
     app.run()
