@@ -94,7 +94,10 @@ class PositionalEncoder(nn.Module):
         x = x * math.sqrt(self.d_model)
         # add constant to embedding
         seq_len = x.size(1)
-        x = x + Variable(self.pe[:, :seq_len], requires_grad=False).cuda()
+        if device.type == 'cuda':
+            x = x + Variable(self.pe[:, :seq_len], requires_grad=False).cuda()
+        else:
+            x = x + Variable(self.pe[:, :seq_len], requires_grad=False)
         return x
 
 
@@ -307,7 +310,10 @@ def translate(model, src, max_len=80, custom_string=True):
     if custom_string:
         src = tokenize_en(src)  # .transpose(0,1)
         # sentence = Variable(torch.LongTensor([[input_text.vocab.stoi[tok] for tok in sentence]])) #.cuda()
-        src = Variable(torch.LongTensor([[input_text.vocab.stoi[tok] for tok in src]])).cuda()
+        if device.type == 'cuda':
+            src = Variable(torch.LongTensor([[input_text.vocab.stoi[tok] for tok in src]])).cuda()
+        else:
+            src = Variable(torch.LongTensor([[input_text.vocab.stoi[tok] for tok in src]]))
         src_mask = (src != input_text.vocab.stoi['<pad>']).unsqueeze(-2)
 
     e_outputs = model.encoder(src, src_mask)
@@ -317,8 +323,10 @@ def translate(model, src, max_len=80, custom_string=True):
     for i in range(1, max_len):
 
         trg_mask = np.triu(np.ones((1, i, i)), k=1).astype("uint8")
-        trg_mask = Variable(torch.from_numpy(trg_mask) == 0).cuda()
-
+        if device.type == 'cuda':
+            trg_mask = Variable(torch.from_numpy(trg_mask) == 0).cuda()
+        else:
+            trg_mask = Variable(torch.from_numpy(trg_mask) == 0)
         out = model.out(model.decoder(outputs[:i].unsqueeze(0),
                                       e_outputs, src_mask, trg_mask))
         out = F.softmax(out, dim=-1)
