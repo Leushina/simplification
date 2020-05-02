@@ -80,6 +80,7 @@ $(function() {
          x = document.getElementById("article to display");
         if (x.classList.contains("visible")) {
             x.classList.remove("visible");
+            x.innerHTML = "";
             x.classList.add("invisible");}
         }
       });
@@ -121,5 +122,4 @@ $(function() {
   document.getElementById('result 3').onclick = reply_click;
   document.getElementById('result 4').onclick = reply_click;
   document.getElementById('result 5').onclick = reply_click;
-
-})
+  })
