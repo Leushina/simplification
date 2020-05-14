@@ -1,5 +1,6 @@
 .idea*
-*.txt
+*_*.txt
+glove*
 parsing* 
 sari.egg-info
 data*
@@ -15,3 +16,4 @@ sari/__pycache__/SARI.cpython-37.pyc
 crawler*
 *.npy
 *.sav
+Dockerfile
