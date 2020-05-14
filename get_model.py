@@ -69,6 +69,27 @@ def data_distribution(data_txt):
 
     return length_df, length_words_df
 
+def read_emb_dict_w2v(inp_lang, vocab_inp_size):
+    # wiki2vec
+    from numpy import array
+    from numpy import asarray
+    from numpy import zeros
+    from wikipedia2vec import Wikipedia2Vec
+
+    embedding_dim = 100
+    wiki2vec = Wikipedia2Vec.load('enwiki_20180420_100d.pkl')
+
+    embedding_matrix = np.zeros((vocab_inp_size, embedding_dim))
+    for word, index in inp_lang.word_index.items():
+        try:
+            embedding_vector = wiki2vec.get_word_vector(word)
+            if embedding_vector is not None:
+                embedding_matrix[index] = embedding_vector
+        except:
+            continue
+
+    del wiki2vec
+
 
 def read_emb_dict():
     """
@@ -259,6 +280,31 @@ def create_model(units=512, BATCH_SIZE= 128): # if __name__ == "__main__":
 
         return batch_loss
 
+    @tf.function
+    def test_step(inp, targ, enc_hidden):
+        loss = 0
+
+        with tf.GradientTape() as tape:
+            enc_output, enc_hidden = encoder(inp, enc_hidden)
+
+            dec_hidden = enc_hidden
+
+            dec_input = tf.expand_dims([targ_lang.word_index['<start>']] * BATCH_SIZE, 1)
+
+            # Teacher forcing - feeding the target as the next input
+            for t in range(1, targ.shape[1]):
+                # passing enc_output to the decoder
+                predictions, dec_hidden, _ = decoder(dec_input, dec_hidden, enc_output)
+
+                loss += loss_function(targ[:, t], predictions)
+
+                # using teacher forcing
+                dec_input = tf.expand_dims(targ[:, t], 1)
+
+        batch_loss = (loss / int(targ.shape[1]))
+
+        return batch_loss
+
     def training(dataset, EPOCHS = 5):
         path_to_enc = "encoder_more_data"
         path_to_dec = "decoder_more_data"
@@ -278,6 +324,15 @@ def create_model(units=512, BATCH_SIZE= 128): # if __name__ == "__main__":
             # saving (checkpoint) the model every 2 epochs
             # if (epoch + 1) % 2 == 0:
                 # checkpoint.save(file_prefix='checkpoint')
+            # else:
+            # enc_hidden = encoder.initialize_hidden_state()
+            #   total_loss = 0
+
+            #   for (batch, (inp, targ)) in enumerate(dataset_val.take(steps_per_epoch)):
+            #     batch_loss = train_step(inp, targ, enc_hidden)
+            #     total_loss += batch_loss
+            #   print('Epoch {} Test Loss {:.4f}'.format(epoch + 1,
+            #                                     total_loss / steps_per_epoch))
 
             print('Epoch {} Loss {:.4f}'.format(epoch + 1,
                                                 total_loss / steps_per_epoch))
@@ -392,6 +447,7 @@ def create_model(units=512, BATCH_SIZE= 128): # if __name__ == "__main__":
         input_train, input_val, target_train, target_val = train_test_split(list(data_txt['Complex']),
                                                                             list(data_txt['Simple']),
                                                                             test_size=0.1,
+                                                                            shuffle=False,
                                                                             random_state=13)
         sentences = pd.DataFrame(list(zip(input_val, target_val)),
                                  columns=['Complex', 'References'])

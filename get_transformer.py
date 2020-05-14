@@ -57,7 +57,7 @@ def create_csv():
     data_txt = preprocess()
     data_txt = data_txt[['Complex', 'Simple']]
 
-    train, val = train_test_split(data_txt, test_size=0.1, random_state=13)
+    train, val = train_test_split(data_txt, test_size=0.1, shuffle=False, random_state=13)
     train.to_csv("train.csv", index=False)
     val.to_csv("val.csv", index=False)
 
@@ -427,6 +427,11 @@ def create_transformer():
                                batch_size_fn=batch_size_fn, train=True,
                                shuffle=True)
 
+        val_iter = MyIterator(val, batch_size=batch_size,  # device=device,
+                              repeat=False, sort_key=lambda x: (len(x.Complex), len(x.Simple)),
+                              batch_size_fn=batch_size_fn, train=True,
+                              shuffle=True)
+
         model.train()
 
         start = time.time()
@@ -477,10 +482,43 @@ def create_transformer():
 
             print('Epoch {} Loss {:.4f}'.format(epoch + 1,
                                                 epoch_loss / i))
-
+            test(epoch)
             torch.save(model.state_dict(), f'{dst}')
             print()
             temp = time.time()
+
+    def test(epoch):
+
+        model.eval()
+
+        total_loss = 0
+
+        for i, batch in enumerate(val_iter):
+            src = batch.Complex.transpose(0, 1).to('cuda')
+            trg = batch.Simple.transpose(0, 1).to('cuda')
+
+            # the Target sentence we input has all words except
+            # the last, as it is using each word to predict the next
+
+            trg_input = trg[:, :-1]
+
+            # the words we are trying to predict
+
+            targets = trg[:, 1:].contiguous().view(-1)
+
+            # create function to make masks using mask code above
+
+            src_mask, trg_mask = create_masks(src, trg_input)
+
+            preds = model(src, trg_input, src_mask, trg_mask)  # .cuda()
+
+            loss = F.cross_entropy(preds.view(-1, preds.size(-1)),
+                                   targets, ignore_index=target_pad)
+
+            total_loss += loss.data
+
+        print('Test on epoch {} Loss {:.4f}'.format(epoch + 1,
+                                                    total_loss / i))
 
     model = Transformer(src_vocab, trg_vocab, d_model, N, heads)
     if device.type == 'cuda':
