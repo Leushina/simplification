@@ -473,6 +473,7 @@ def create_model(units=512, BATCH_SIZE= 128): # if __name__ == "__main__":
     input_train, input_val, target_train, target_val = train_test_split(list(data_txt['Complex']),
                                                                         list(data_txt['Simple']),
                                                                         test_size=0.1,
+                                                                        shuffle=False,
                                                                         random_state=13)
 
     preprocessed_inp = [preprocess_sentence(sent) for sent in input_train[:num_samples]]
@@ -486,7 +487,8 @@ def create_model(units=512, BATCH_SIZE= 128): # if __name__ == "__main__":
 
     input_tensor_train, input_tensor_val, target_tensor_train, target_tensor_val = train_test_split(input_tensor,
                                                                                                     target_tensor,
-                                                                                                    test_size=0.2)
+                                                                                                    test_size=0.2,
+                                                                                                    random_state=13)
 
     del preprocessed_trg, preprocessed_inp
 

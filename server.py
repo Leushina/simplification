@@ -22,7 +22,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '1R-322yozb-mIijinjg1fHZCr49_nFP5p4zY-cPXt0XM'
 RANGE_NAME = 'Data!A2:C'
 
-# Читаем ключи из файла
+# Read keys from credential file
 credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json',
                                                                ['https://www.googleapis.com/auth/spreadsheets'])
 
@@ -35,15 +35,15 @@ sheet = service.spreadsheets()
 indexer, doc_lengths, doc_urls, term2id = read_indexers()
 tdm = get_tfidf()
 pca_ = get_pca_model()
-global articles_to_simplify
+global articles_to_simplify  # articles ids returned in last search result
 articles_to_simplify = []
 
 
 def preprocess_sentence(sent):
     """
-
-    :param sent:
-    :return:
+    punctuation signs separated with additional space, all letters brought to lowercase
+    :param sent: raw sentence
+    :return: input sentence to the model
     """
     sent = unicode_to_ascii(sent.lower().strip())
     sent = re.sub(r"([?.!,¿])", r" \1 ", sent)
@@ -67,7 +67,7 @@ def simplify():
     """
     data = request.get_json()
     text_input = data['text']
-    preds = {"simplifications": "", "complex_sents" : ""}
+    preds = {"simplifications": "", "complex_sents": ""}
     src = str(text_input)
     src = sent_tokenize(src)
 
@@ -155,6 +155,7 @@ def display_article():
 
     doc = HtmlDocument(url)
     doc.parse()
+    # article text: header that we got in the previous step and all text found by tag <p>
     txt = "<p>" + doc.header
     texts = doc.body.findAll('p')
     txt += u"</p><p>".join([t.getText() for t in texts])

@@ -396,6 +396,7 @@ def create_transformer():
         input_train, input_val, target_train, target_val = train_test_split(list(data_txt['Complex']),
                                                                             list(data_txt['Simple']),
                                                                             test_size=0.1,
+                                                                            shuffle=False,
                                                                             random_state=13)
         sentences = pd.DataFrame(list(zip(input_val, target_val)),
                                  columns=['Complex', 'References'])
@@ -443,9 +444,10 @@ def create_transformer():
             epoch_loss = 0
 
             for i, batch in enumerate(train_iter):
-                src = batch.Complex.transpose(0, 1).to('cuda')
-                trg = batch.Simple.transpose(0, 1).to('cuda')
-
+                src = batch.Complex.transpose(0, 1)
+                trg = batch.Simple.transpose(0, 1)
+                if device.type == 'cuda':
+                    src, trg = src.to('cuda'), trg.to('cuda')
                 # the Target sentence we input has all words except
                 # the last, as it is using each word to predict the next
 
@@ -459,7 +461,7 @@ def create_transformer():
 
                 src_mask, trg_mask = create_masks(src, trg_input)
 
-                preds = model(src, trg_input, src_mask, trg_mask)  # .cuda()
+                preds = model(src, trg_input, src_mask, trg_mask)
 
                 optim.zero_grad()
 
@@ -487,38 +489,40 @@ def create_transformer():
             print()
             temp = time.time()
 
-    def test(epoch):
+            def test(epoch):
 
-        model.eval()
+                model.eval()
 
-        total_loss = 0
+                total_loss = 0
 
-        for i, batch in enumerate(val_iter):
-            src = batch.Complex.transpose(0, 1).to('cuda')
-            trg = batch.Simple.transpose(0, 1).to('cuda')
+                for i, batch in enumerate(val_iter):
+                    src = batch.Complex.transpose(0, 1)
+                    trg = batch.Simple.transpose(0, 1)
+                    if device.type == 'cuda':
+                        src, trg = src.to('cuda'), trg.to('cuda')
 
-            # the Target sentence we input has all words except
-            # the last, as it is using each word to predict the next
+                    # the Target sentence we input has all words except
+                    # the last, as it is using each word to predict the next
 
-            trg_input = trg[:, :-1]
+                    trg_input = trg[:, :-1]
 
-            # the words we are trying to predict
+                    # the words we are trying to predict
 
-            targets = trg[:, 1:].contiguous().view(-1)
+                    targets = trg[:, 1:].contiguous().view(-1)
 
-            # create function to make masks using mask code above
+                    # create function to make masks using mask code above
 
-            src_mask, trg_mask = create_masks(src, trg_input)
+                    src_mask, trg_mask = create_masks(src, trg_input)
 
-            preds = model(src, trg_input, src_mask, trg_mask)  # .cuda()
+                    preds = model(src, trg_input, src_mask, trg_mask)
 
-            loss = F.cross_entropy(preds.view(-1, preds.size(-1)),
-                                   targets, ignore_index=target_pad)
+                    loss = F.cross_entropy(preds.view(-1, preds.size(-1)),
+                                           targets, ignore_index=target_pad)
 
-            total_loss += loss.data
+                    total_loss += loss.data
 
-        print('Test on epoch {} Loss {:.4f}'.format(epoch + 1,
-                                                    total_loss / i))
+                print('Test on epoch {} Loss {:.4f}'.format(epoch + 1,
+                                                            total_loss / i))
 
     model = Transformer(src_vocab, trg_vocab, d_model, N, heads)
     if device.type == 'cuda':
@@ -530,7 +534,10 @@ def create_transformer():
     optim = torch.optim.Adam(model.parameters(), lr=0.000001, betas=(0.9, 0.98), eps=1e-9)
 
     dst = "transformer/Transformer_1"  # loss 0.3215  512 units
-    model.load_state_dict(torch.load(dst))  # map_location=torch.device('cpu')))
+    if device.type == 'cuda':
+        model.load_state_dict(torch.load(dst))
+    else:
+        model.load_state_dict(torch.load(dst, map_location=torch.device('cpu')))
     model.eval()
     # train_model(5)
     return model
