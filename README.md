@@ -31,7 +31,7 @@ Metrics are also confirm this fact,seeing as simplification (SARI) and readabili
 
 # API
 
-![alt text](https://drive.google.com/open?id=1-YAJ_mvT6-Zfp6ETC4VQEfR_Z-L8lSQm)
+![API example](https://drive.google.com/uc?id=1-YAJ_mvT6-Zfp6ETC4VQEfR_Z-L8lSQm )
 
 Therefore, we created an API for simplification using Python and Flask framework. 
 We built small inverted index for search from articles on [reuters.com](https://www.reuters.com) 
