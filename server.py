@@ -112,7 +112,7 @@ def save():
                                                      insertDataOption=insert_data_option, body=body)
     response = request_.execute()
     print(response)
-    return response
+    return jsonify(response)
 
 
 @app.route('/search', methods=["POST"])

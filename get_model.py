@@ -69,7 +69,8 @@ def data_distribution(data_txt):
 
     return length_df, length_words_df
 
-def read_emb_dict_w2v(inp_lang, vocab_inp_size):
+
+def read_emb_matrix_w2v(inp_lang, vocab_inp_size):
     # wiki2vec
     from numpy import array
     from numpy import asarray
@@ -89,6 +90,7 @@ def read_emb_dict_w2v(inp_lang, vocab_inp_size):
             continue
 
     del wiki2vec
+    return embedding_matrix, embedding_dim
 
 
 def read_emb_dict():
@@ -465,7 +467,6 @@ def create_model(units=512, BATCH_SIZE= 128): # if __name__ == "__main__":
         return max(saris), sum(saris) / n
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    embeddings_dictionary, embedding_dim = read_emb_dict()
 
     data_txt = preprocess()
     num_samples = -1 # 10000
@@ -501,12 +502,17 @@ def create_model(units=512, BATCH_SIZE= 128): # if __name__ == "__main__":
     dataset = tf.data.Dataset.from_tensor_slices((input_tensor_train, target_tensor_train)).shuffle(BUFFER_SIZE)
     dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
 
+    # If GLOVE embeddings
+    embeddings_dictionary, embedding_dim = read_emb_dict()
     embedding_matrix = np.zeros((vocab_inp_size, embedding_dim))
     for word, index in inp_lang.word_index.items():
         embedding_vector = embeddings_dictionary.get(word)
         if embedding_vector is not None:
             embedding_matrix[index] = embedding_vector
     del embeddings_dictionary
+
+    # # If Word2vec embeddings
+    # embeddings_matrix, embedding_dim = read_emb_matrix_w2v(inp_lang, vocab_inp_size)
 
     encoder = Encoder(vocab_inp_size, embedding_dim, units, BATCH_SIZE, embedding_matrix)
 
