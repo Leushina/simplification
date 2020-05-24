@@ -22,6 +22,7 @@ requests==2.23.0
 resampy==0.2.2
 scikit-learn
 spacy==2.2.4
+tensorflow
 torch
 torchtext
 torchvision
