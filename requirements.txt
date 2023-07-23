@@ -10,7 +10,7 @@ idna==2.9
 bs4
 importlib-metadata==1.6.0
 matplotlib
-nltk==3.4.5
+nltk==3.6.6
 notebook
 numpy
 olefile==0.46
